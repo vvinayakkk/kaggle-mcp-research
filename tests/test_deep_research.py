@@ -6,6 +6,7 @@ papers_with_negative_results, deep_dive_single_paper,
 cross_dataset_analysis.
 """
 import json
+import os
 import pytest
 
 from kaggle_mcp.tools.deep_research import (
@@ -18,6 +19,8 @@ from kaggle_mcp.tools.deep_research import (
     deep_dive_single_paper,
     cross_dataset_analysis,
 )
+
+_KAGGLE_TOKEN = os.environ.get("KAGGLE_TOKEN", "")
 
 
 # ════════════════════════════════════════════════════════════════════════════════
@@ -55,6 +58,7 @@ class TestAnalyseMethodEvolution:
 # find_competition_winning_solutions
 # ════════════════════════════════════════════════════════════════════════════════
 
+@pytest.mark.skipif(not _KAGGLE_TOKEN, reason="KAGGLE_TOKEN not set")
 class TestFindCompetitionWinningSolutions:
     def test_returns_valid_json(self):
         result = json.loads(find_competition_winning_solutions("titanic"))

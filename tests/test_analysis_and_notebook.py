@@ -305,20 +305,23 @@ class TestNotebookEdgeCases:
         assert "my-competition-slug" in nb_str
 
     def test_large_batch_size_accepted(self):
+        kw = {k: v for k, v in self.BASE_KWARGS.items() if k != "batch_size"}
         nb_str = generate_kaggle_notebook(
-            task_type="image_classification", batch_size=128, **self.BASE_KWARGS
+            task_type="image_classification", batch_size=128, **kw
         )
         assert json.loads(nb_str)  # valid JSON
 
     def test_small_image_size_accepted(self):
+        kw = {k: v for k, v in self.BASE_KWARGS.items() if k != "image_size"}
         nb_str = generate_kaggle_notebook(
-            task_type="image_classification", image_size=64, **self.BASE_KWARGS
+            task_type="image_classification", image_size=64, **kw
         )
         assert json.loads(nb_str)
 
     def test_large_image_size_accepted(self):
+        kw = {k: v for k, v in self.BASE_KWARGS.items() if k != "image_size"}
         nb_str = generate_kaggle_notebook(
-            task_type="image_classification", image_size=512, **self.BASE_KWARGS
+            task_type="image_classification", image_size=512, **kw
         )
         assert json.loads(nb_str)
 
@@ -332,8 +335,9 @@ class TestNotebookEdgeCases:
         assert custom_note in nb_str
 
     def test_no_gpu_flag_still_generates(self):
+        kw = {k: v for k, v in self.BASE_KWARGS.items() if k != "use_gpu"}
         nb_str = generate_kaggle_notebook(
-            task_type="tabular", use_gpu=False, **self.BASE_KWARGS
+            task_type="tabular", use_gpu=False, **kw
         )
         assert json.loads(nb_str)
 

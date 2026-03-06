@@ -83,15 +83,15 @@ def generate_kaggle_notebook(
             "isInternetEnabled": True,
         }
         nb.cells = [
-            nbformat.v4.new_markdown_cell(src) if src.startswith("#") else nbformat.v4.new_code_cell(src)
-            for src in cells_src
+            nbformat.v4.new_markdown_cell(src) if ctype == "markdown" else nbformat.v4.new_code_cell(src)
+            for ctype, src in cells_src
         ]
         return nbformat.writes(nb)
     else:
         # Manual JSON construction
         cells = []
-        for src in cells_src:
-            cell_type = "markdown" if src.startswith("#") else "code"
+        for ctype, src in cells_src:
+            cell_type = ctype  # explicit type from builder
             cells.append({
                 "cell_type": cell_type,
                 "metadata":  {},
@@ -125,17 +125,17 @@ def _image_classification_notebook(
 ):
     ts = datetime.now().strftime("%Y-%m-%d %H:%M")
     return [
-        f"""# 🏆 Auto-Generated Kaggle Notebook — Image Classification
+        ("markdown", f"""# 🏆 Auto-Generated Kaggle Notebook — Image Classification
 **Task:** {task_description}
 **Dataset:** {dataset_info}
 **Architecture:** {architecture_description}
 **Generated:** {ts}
 {f"**Competition:** {competition_slug}" if competition_slug else ""}
 {"**Notes:** " + extra_notes if extra_notes else ""}
-""",
+"""),
 
         # ── SETUP ────────────────────────────────────────────────────────────────
-        """\
+        ("code", """\
 # ── 1. SETUP & IMPORTS ──────────────────────────────────────────────────────
 import os, sys, json, time, random, warnings
 import numpy as np
@@ -171,10 +171,10 @@ print(f"Device: {DEVICE}")
 if DEVICE.type == "cuda":
     print(f"  GPU: {torch.cuda.get_device_name(0)}")
     print(f"  VRAM: {torch.cuda.get_device_properties(0).total_memory / 1e9:.1f} GB")
-""",
+"""),
 
         # ── CONFIG ───────────────────────────────────────────────────────────────
-        f"""\
+        ("code", f"""\
 # ── 2. CONFIGURATION ─────────────────────────────────────────────────────────
 CFG = dict(
     # Data
@@ -215,10 +215,10 @@ for d in [CFG["output_dir"], CFG["model_dir"]]:
     d.mkdir(parents=True, exist_ok=True)
 
 print("Config loaded:", json.dumps({{k: str(v) for k,v in CFG.items()}}, indent=2))
-""",
+"""),
 
         # ── DATA DISCOVERY ───────────────────────────────────────────────────────
-        """\
+        ("code", """\
 # ── 3. DATA DISCOVERY ────────────────────────────────────────────────────────
 print("\\n=== INPUT FILES ===")
 for p in Path("/kaggle/input").rglob("*"):
@@ -259,10 +259,10 @@ print(f"Classes ({len(classes)}): {classes}")
 CFG["num_classes"] = len(classes)
 class2idx = {c: i for i, c in enumerate(classes)}
 idx2class = {i: c for c, i in class2idx.items()}
-""",
+"""),
 
         # ── DATASET CLASS ────────────────────────────────────────────────────────
-        """\
+        ("code", """\
 # ── 4. DATASET & AUGMENTATION ────────────────────────────────────────────────
 def get_transforms(split: str, image_size: int):
     mean = [0.485, 0.456, 0.406]
@@ -333,10 +333,10 @@ img_dirs = [
 print("Image directories found:", img_dirs)
 img_dir = img_dirs[0] if img_dirs else Path("/kaggle/input")
 print(f"Using image dir: {img_dir}")
-""",
+"""),
 
         # ── SPLIT & LOADERS ──────────────────────────────────────────────────────
-        """\
+        ("code", """\
 # ── 5. TRAIN/VAL SPLIT ───────────────────────────────────────────────────────
 from sklearn.model_selection import StratifiedKFold
 
@@ -366,10 +366,10 @@ tr_loader = DataLoader(tr_ds, batch_size=CFG["batch_size"],  shuffle=True,
 va_loader = DataLoader(va_ds, batch_size=CFG["batch_size"]*2, shuffle=False,
                        num_workers=2, pin_memory=True)
 print(f"Batches — train: {len(tr_loader)}  |  val: {len(va_loader)}")
-""",
+"""),
 
         # ── MODEL ────────────────────────────────────────────────────────────────
-        """\
+        ("code", """\
 # ── 6. MODEL ─────────────────────────────────────────────────────────────────
 def build_model(backbone: str, num_classes: int, drop_rate: float, pretrained: bool):
     weights = "IMAGENET1K_V1" if pretrained else None
@@ -399,10 +399,10 @@ model = build_model(CFG["backbone"], CFG["num_classes"], CFG["drop_rate"], CFG["
 model = model.to(DEVICE)
 total_params = sum(p.numel() for p in model.parameters())
 print(f"Model: {CFG['backbone']}  |  Params: {total_params/1e6:.1f}M")
-""",
+"""),
 
         # ── TRAINING ─────────────────────────────────────────────────────────────
-        """\
+        ("code", """\
 # ── 7. LOSS / OPTIMISER / SCHEDULER ─────────────────────────────────────────
 class LabelSmoothingCE(nn.Module):
     def __init__(self, classes, smoothing=0.1):
@@ -473,10 +473,10 @@ def eval_epoch(loader):
     f1   = skm.f1_score(all_labels, all_preds, average="macro")
     acc  = skm.accuracy_score(all_labels, all_preds)
     return loss, f1, acc
-""",
+"""),
 
         # ── TRAIN LOOP ───────────────────────────────────────────────────────────
-        """\
+        ("code", """\
 # ── 8. TRAINING LOOP ─────────────────────────────────────────────────────────
 best_f1       = 0.0
 patience_left = CFG["patience"]
@@ -517,10 +517,10 @@ for epoch in range(1, CFG["num_epochs"] + 1):
 
 print(f"\\nBest Val F1: {best_f1:.4f}")
 pd.DataFrame(history).to_csv(CFG["output_dir"] / "history.csv", index=False)
-""",
+"""),
 
         # ── INFERENCE ────────────────────────────────────────────────────────────
-        """\
+        ("code", """\
 # ── 9. INFERENCE & SUBMISSION ────────────────────────────────────────────────
 # Load best checkpoint
 ckpt = torch.load(best_ckpt, map_location=DEVICE)
@@ -567,10 +567,10 @@ if test_df is not None:
     print(pd.Series(pred_labels).value_counts())
 else:
     print("No test set found — skipping submission generation.")
-""",
+"""),
 
         # ── RESULTS ──────────────────────────────────────────────────────────────
-        """\
+        ("code", """\
 # ── 10. RESULTS & VISUALISATION ─────────────────────────────────────────────
 hist_df = pd.read_csv(CFG["output_dir"] / "history.csv")
 
@@ -615,7 +615,7 @@ for k, v in results.items():
 print("\\nOutput files:")
 for p in CFG["output_dir"].iterdir():
     print(f"  {p.name} ({p.stat().st_size/1024:.1f} KB)")
-""",
+"""),
     ]
 
 
@@ -627,10 +627,10 @@ def _nlp_notebook(task_description, dataset_info, architecture_description,
                   competition_slug, num_epochs, batch_size, extra_notes, **_):
     ts = datetime.now().strftime("%Y-%m-%d %H:%M")
     return [
-        f"""# 🏆 Auto-Generated Kaggle Notebook — NLP Classification
+        ("markdown", f"""# 🏆 Auto-Generated Kaggle Notebook — NLP Classification
 **Task:** {task_description}  |  **Generated:** {ts}
-""",
-        """\
+"""),
+        ("code", """\
 # ── SETUP ────────────────────────────────────────────────────────────────────
 import os, json, time, warnings, random
 import numpy as np
@@ -646,8 +646,8 @@ SEED = 42
 random.seed(SEED); np.random.seed(SEED); torch.manual_seed(SEED)
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 print("Device:", DEVICE)
-""",
-        f"""\
+"""),
+        ("code", f"""\
 # ── CONFIG ───────────────────────────────────────────────────────────────────
 CFG = dict(
     model_name   = "distilbert-base-uncased",   # or 'microsoft/deberta-v3-small'
@@ -660,8 +660,8 @@ CFG = dict(
     output_dir   = Path("/kaggle/working/outputs"),
 )
 CFG["output_dir"].mkdir(parents=True, exist_ok=True)
-""",
-        """\
+"""),
+        ("code", """\
 # ── DATA ─────────────────────────────────────────────────────────────────────
 csv_files = list(Path("/kaggle/input").rglob("*.csv"))
 train_df = pd.read_csv(next(f for f in csv_files if "train" in f.name.lower()))
@@ -678,8 +678,8 @@ class2idx = {c: i for i, c in enumerate(classes)}
 train_df[label_col] = train_df[label_col].map(class2idx)
 CFG["num_labels"] = len(classes)
 print("Classes:", classes)
-""",
-        """\
+"""),
+        ("code", """\
 # ── DATASET & TRAINING ───────────────────────────────────────────────────────
 tokenizer = AutoTokenizer.from_pretrained(CFG["model_name"])
 
@@ -741,7 +741,7 @@ idx2class = {i: c for c, i in class2idx.items()}
 test_df[label_col] = [idx2class[i] for i in te_preds]
 test_df.to_csv(CFG["output_dir"] / "submission.csv", index=False)
 print("Done! submission.csv saved.")
-""",
+"""),
     ]
 
 
@@ -753,8 +753,8 @@ def _tabular_notebook(task_description, dataset_info, architecture_description,
                       competition_slug, num_epochs, batch_size, extra_notes, **_):
     ts = datetime.now().strftime("%Y-%m-%d %H:%M")
     return [
-        f"# 🏆 Auto-Generated Kaggle Notebook — Tabular\n**Task:** {task_description}  |  **Generated:** {ts}\n",
-        """\
+        ("markdown", f"# 🏆 Auto-Generated Kaggle Notebook — Tabular\n**Task:** {task_description}  |  **Generated:** {ts}\n"),
+        ("code", """\
 import os, json, warnings, numpy as np, pandas as pd
 from pathlib import Path
 import lightgbm as lgb
@@ -766,8 +766,8 @@ warnings.filterwarnings("ignore")
 optuna.logging.set_verbosity(optuna.logging.WARNING)
 SEED = 42; np.random.seed(SEED)
 OUTPUT = Path("/kaggle/working/outputs"); OUTPUT.mkdir(exist_ok=True)
-""",
-        """\
+"""),
+        ("code", """\
 csv_files = list(Path("/kaggle/input").rglob("*.csv"))
 train_df  = pd.read_csv(next(f for f in csv_files if "train" in f.name.lower()))
 test_df   = pd.read_csv(next(f for f in csv_files if "test"  in f.name.lower()))
@@ -778,8 +778,8 @@ feat_cols = [c for c in train_df.columns if c != target and c != id_col]
 X, y = train_df[feat_cols], train_df[target]
 X_test = test_df[feat_cols]
 print(f"Train: {X.shape}  |  Test: {X_test.shape}  |  Target: {y.value_counts().to_dict()}")
-""",
-        """\
+"""),
+        ("code", """\
 # ── OPTUNA TUNING + K-FOLD ENSEMBLE ─────────────────────────────────────────
 def lgb_objective(trial):
     params = {
@@ -817,7 +817,7 @@ sub = test_df[[id_col]] if id_col else pd.DataFrame()
 sub[target] = test_preds.round().astype(int)
 sub.to_csv(OUTPUT / "submission.csv", index=False)
 print("Done! submission.csv saved.")
-""",
+"""),
     ]
 
 
@@ -829,8 +829,8 @@ def _object_detection_notebook(task_description, dataset_info, architecture_desc
                                 competition_slug, num_epochs, batch_size, extra_notes, **_):
     ts = datetime.now().strftime("%Y-%m-%d %H:%M")
     return [
-        f"# 🏆 Auto-Generated Kaggle Notebook — Object Detection\n**Task:** {task_description}  |  **Generated:** {ts}\n",
-        f"""\
+        ("markdown", f"# 🏆 Auto-Generated Kaggle Notebook — Object Detection\n**Task:** {task_description}  |  **Generated:** {ts}\n"),
+        ("code", f"""\
 # Install YOLOv8
 import subprocess
 subprocess.run(["pip", "install", "ultralytics", "-q"])
@@ -851,7 +851,7 @@ results = model.train(
     save    = True,
 )
 print("Training done:", results)
-""",
+"""),
     ]
 
 
@@ -863,21 +863,21 @@ def _general_notebook(task_description, dataset_info, architecture_description,
                       competition_slug, num_epochs, batch_size, extra_notes, **_):
     ts = datetime.now().strftime("%Y-%m-%d %H:%M")
     return [
-        f"# 🏆 Auto-Generated Kaggle Notebook\n**Task:** {task_description}  |  **Generated:** {ts}\n",
-        """\
+        ("markdown", f"# 🏆 Auto-Generated Kaggle Notebook\n**Task:** {task_description}  |  **Generated:** {ts}\n"),
+        ("code", """\
 import os, json, numpy as np, pandas as pd
 from pathlib import Path
 OUTPUT = Path("/kaggle/working/outputs"); OUTPUT.mkdir(exist_ok=True)
 print("Files in /kaggle/input:")
 for p in Path("/kaggle/input").rglob("*"):
     print(" ", p)
-""",
-        f"""\
+"""),
+        ("code", f"""\
 # ── IMPLEMENT YOUR SOLUTION BELOW ────────────────────────────────────────────
 # Architecture: {architecture_description}
 # Dataset:      {dataset_info}
 # Notes:        {extra_notes}
 
 # << YOUR CODE HERE >>
-""",
+"""),
     ]

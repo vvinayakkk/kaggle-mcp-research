@@ -1,0 +1,27 @@
+{
+  "inputs": [
+    {
+      "id": "kaggle_token",
+      "type": "promptString",
+      "description": "Kaggle API Token — find yours at kaggle.com/settings → API → Create New Token. Starts with KGAT_",
+      "password": true
+    },
+    {
+      "id": "hf_token",
+      "type": "promptString",
+      "description": "HuggingFace Token — create at huggingface.co/settings/tokens (write access recommended). Starts with hf_",
+      "password": true
+    }
+  ],
+  "servers": {
+    "kaggle-mcp": {
+      "type": "stdio",
+      "command": "uvx",
+      "args": ["kaggle-mcp-research@latest"],
+      "env": {
+        "KAGGLE_TOKEN": "${input:kaggle_token}",
+        "HF_TOKEN": "${input:hf_token}"
+      }
+    }
+  }
+}

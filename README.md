@@ -1,21 +1,23 @@
 <div align="center">
 
+<img src="https://img.shields.io/pypi/v/kaggle-mcp-research?style=for-the-badge&logo=pypi&logoColor=white&label=PyPI" />
 <img src="https://img.shields.io/badge/Python-3.10%2B-3776AB?style=for-the-badge&logo=python&logoColor=white" />
 <img src="https://img.shields.io/badge/MCP-FastMCP-FF6B35?style=for-the-badge" />
 <img src="https://img.shields.io/badge/Kaggle-API%20v1-20BEFF?style=for-the-badge&logo=kaggle&logoColor=white" />
 <img src="https://img.shields.io/badge/HuggingFace-%F0%9F%A4%97-FFD21E?style=for-the-badge" />
 <img src="https://img.shields.io/badge/License-MIT-green?style=for-the-badge" />
+<img src="https://img.shields.io/github/actions/workflow/status/vvinayakkk/kaggle-mcp-research/ci.yml?style=for-the-badge&label=CI" />
 
 <br /><br />
 
-# 🏆 Kaggle Research MCP
+# 🏆 Kaggle Research MCP v2
 
-### *Give GitHub Copilot a research team, a GPU cluster, and a Kaggle account.*
+### *Give GitHub Copilot a research team, a brutal critic, a GPU cluster, and a Kaggle account.*
 
-**One prompt. 200 papers. A novel architecture. A trained model. Kaggle results.**  
-Fully automated, end-to-end, zero manual steps.
+**One prompt. 200 papers. Brutally evaluated architecture. Notebook generated. Trained. Submitted.**  
+Fully automated, end-to-end, zero manual steps — with academic-grade evaluation baked in.
 
-[**Quick Start**](#-quick-start) · [**Features**](#-features) · [**How It Works**](#-how-it-works) · [**Tools Reference**](#-tools-reference) · [**Contributing**](#-contributing)
+[**Quick Start**](#-quick-start) · [**How It Works**](#-how-it-works-8-phase-pipeline) · [**Tools Reference**](#-tools-reference) · [**Contributing**](#-contributing)
 
 </div>
 
@@ -23,13 +25,16 @@ Fully automated, end-to-end, zero manual steps.
 
 ## 🎯 What Is This?
 
-**Kaggle Research MCP** is a [Model Context Protocol](https://modelcontextprotocol.io) server that integrates directly into **VS Code + GitHub Copilot**, giving the AI assistant real-time access to:
+**Kaggle Research MCP v2** is a [Model Context Protocol](https://modelcontextprotocol.io) server that integrates directly into **VS Code + GitHub Copilot**, giving the AI assistant 55+ real-time tools across the full ML lifecycle:
 
 | Capability | What It Does |
 |-----------|--------------|
-| 🔬 **Deep Research** | Searches arXiv, Semantic Scholar, Papers With Code, and SOTA leaderboards |
-| 🧠 **Architecture Design** | Analyses baselines, identifies gaps, proposes novel architectures with citations |
-| 📓 **Notebook Generation** | Creates complete, GPU-ready Kaggle notebooks (image / NLP / tabular / detection) |
+| 🔬 **Deep Research** | Method evolution timelines, competition winning solutions, cross-dataset SOTA comparison |
+| 🧠 **Architecture Design** | Designs novel architectures from literature gaps + your baselines |
+| 🔥 **Brutal Evaluation** | Red-team critiques, failure mode detection, compute feasibility — before any GPU time |
+| 🎓 **Academic Review Sim** | Full ICLR/NeurIPS/CVPR rubric scoring with accept/reject prediction |
+| 📊 **Training Diagnostics** | Parses any training log → overfitting / underfitting / plateau / instability diagnosis |
+| 📓 **Notebook Generation** | Complete, GPU-ready Kaggle notebooks (image / NLP / tabular / detection / segmentation) |
 | 🚀 **Kaggle Automation** | Pushes notebooks, monitors execution, retrieves outputs — all automatically |
 | 🤗 **HuggingFace Access** | Searches models, downloads datasets, runs Inference API |
 | 📦 **ZIP Intake** | Decodes your professor's half-done research ZIP — code, papers, baselines, datasets |
@@ -37,20 +42,25 @@ Fully automated, end-to-end, zero manual steps.
 ### The Magic
 
 You upload a ZIP of your research material and type *one sentence* to Copilot.  
-Copilot reads your existing work, surveys 50–200 papers, designs a better architecture, generates a full training notebook, uploads it to Kaggle with GPU enabled, waits for results, and returns a structured analysis — **without you doing anything else**.
+Copilot reads your existing work, surveys 50–200 papers, **brutally evaluates and iterates the architecture 3 times**, generates a publication-ready notebook, uploads it to Kaggle, waits for results, and routes to the right Q1 journal — **without you doing anything else**.
 
 ---
 
 ## ✨ Features
 
-- **35+ MCP tools** covering every Kaggle and HuggingFace API endpoint
-- **Autonomous research pipeline** — single prompt triggers everything
+- **55+ MCP tools** covering every Kaggle and HuggingFace API endpoint plus deep research and evaluation
+- **Mandatory 3-iteration brutal evaluation loop** — architecture is red-teamed before any GPU is touched
+- **Academic reviewer simulation** — ICLR / NeurIPS / CVPR / ICML rubrics with accept-probability estimates
 - **Smart notebook generation** templated for 5 task types with best practices baked in:
   - MixUp / CutMix / RandAugment augmentation
   - Mixed precision (FP16), gradient clipping, early stopping
   - TTA inference, checkpoint saving, training curves
 - **SOTA benchmark lookup** — exact leaderboard numbers from Papers With Code
+- **Method evolution timelines** — track how a technique progressed year-by-year
+- **Compute feasibility estimator** — memory + runtime estimates before submitting to Kaggle
+- **Training log interpreter** — paste any log, get a diagnosis (overfitting / plateau / instability)
 - **ZIP decoder** — analyses your professor's code, infers the problem type, extracts baselines
+- **Q1 journal routing** — after strong results, recommends IEEE TPAMI / IJCV / TIP with required experiments
 - **Credential-safe** — tokens stored as VS Code secrets, never in files
 - **Works for any Kaggle competition** — not tied to a specific dataset
 - **Free research APIs** — arXiv, Semantic Scholar, Papers With Code (no additional API keys needed)
@@ -110,19 +120,85 @@ Here's my research ZIP: C:/Users/me/research.zip
 Please do a full analysis, find the best architecture, generate a notebook, and run it.
 ```
 
-Copilot will autonomously execute all 6 phases of the research pipeline.
+Copilot will autonomously execute all **8 phases** of the research pipeline.
 
 ---
 
-## 🔄 How It Works
+## 🔄 How It Works — 8-Phase Pipeline
 
 ```
-User: "here is my zip + competition slug"
-           │
-           ▼
- ┌─────────────────────┐
- │  Phase 1: Decode    │  extract_zip_research()
- │  Research Material  │  → task type, baselines, datasets
+User: "here is my zip + competition slug"  (that's all you type)
+              │
+        ┌─────▼──────────────────────────────────────────┐
+        │  Phase 0 · Intake                              │
+        │  extract_zip_research + analyze_research_dir   │
+        │  → task type, baselines, datasets, code        │
+        └─────┬──────────────────────────────────────────┘
+              │
+        ┌─────▼──────────────────────────────────────────┐
+        │  Phase 1 · Deep Literature (50–200 papers)     │
+        │  full_literature_sweep + analyse_method_       │
+        │  evolution + find_competition_winning_solutions│
+        │  + papers_with_negative_results                │
+        └─────┬──────────────────────────────────────────┘
+              │
+        ┌─────▼──────────────────────────────────────────┐
+        │  Phase 2 · Gap Analysis → arch_v1 designed     │
+        │  compare_sota_methods + identify_research_gaps │
+        │  + cross_dataset_analysis                      │
+        └─────┬──────────────────────────────────────────┘
+              │
+        ┌─────▼──────────────────────────────────────────┐
+        │  Phase 3 · Brutal Evaluation Loop ×3           │
+        │  brutal_evaluate → reiterate_architecture ×3   │
+        │  → roast_approach (final)                      │
+        │  !! ABORTS if score < 4 after 3 iterations !!  │
+        └─────┬──────────────────────────────────────────┘
+              │
+        ┌─────▼──────────────────────────────────────────┐
+        │  Phase 4 · Academic Review Gate                │
+        │  reviewer_perspective + paper_worthiness       │
+        │  Gate: readiness ≥ 40 % to proceed             │
+        └─────┬──────────────────────────────────────────┘
+              │
+        ┌─────▼──────────────────────────────────────────┐
+        │  Phase 5 · Compute Planning                    │
+        │  estimate_kaggle_feasibility + design_ablation │
+        │  + identify_hard_samples                       │
+        └─────┬──────────────────────────────────────────┘
+              │
+        ┌─────▼──────────────────────────────────────────┐
+        │  Phase 6 · Notebook + Submit                   │
+        │  generate_kaggle_notebook → kaggle_push_and_run│
+        │  → kaggle_kernel_output_log                    │
+        └─────┬──────────────────────────────────────────┘
+              │
+        ┌─────▼──────────────────────────────────────────┐
+        │  Phase 7 · Results Analysis                    │
+        │  interpret_training_log + suggest_ensemble     │
+        │  + generate_hypothesis_test_plan               │
+        └─────┬──────────────────────────────────────────┘
+              │
+        ┌─────▼──────────────────────────────────────────┐
+        │  Phase 8 · Publication Route (if strong)       │
+        │  q1_journal_analysis → ranked list:            │
+        │  IEEE TPAMI / IJCV / TIP / Pattern Recognition │
+        └─────────────────────────────────────────────────┘
+              │
+              ▼
+   ✅  Architecture report · training curves
+       submission.csv · journal roadmap
+
+```
+
+> The diagram above focuses on the flow.
+> For complete Phase definitions, see [`.github/copilot-instructions.md`](.github/copilot-instructions.md).
+
+---
+
+## ⚡ Quick Start — old anchor kept for links
+
+<!-- anchor: quick-start -->
  └─────────┬───────────┘
            ▼
  ┌─────────────────────┐
@@ -141,18 +217,6 @@ User: "here is my zip + competition slug"
  └─────────┬───────────┘
            ▼
  ┌─────────────────────┐
- │  Phase 5: Deploy    │  kaggle_push_and_run()
- │  and Monitor        │  → GPU kernel + live monitoring
- └─────────┬───────────┘
-           ▼
- ┌─────────────────────┐
- │  Phase 6: Analyse   │  kaggle_kernel_output_log()
- │  Results            │  → metrics, charts, submission
- └─────────────────────┘
-           │
-           ▼
-    >> Architecture report + training curves + submission.csv
-```
 
 ---
 
@@ -231,6 +295,38 @@ User: "here is my zip + competition slug"
 | `summarize_code_file` | Summarise .py / .ipynb file |
 | `run_full_research_pipeline` | **One-shot: ZIP → train → results** |
 
+### Deep Research *(v2.0.0)*
+| Tool | Description |
+|------|-------------|
+| `analyse_method_evolution` | Year-by-year timeline of a technique, inflection points, current frontier |
+| `find_competition_winning_solutions` | Top Kaggle kernels for a competition with detected architectures |
+| `compare_sota_methods` | Side-by-side SOTA table for a task from Papers With Code |
+| `identify_research_gaps` | Unstudied technique combinations from a set of abstracts |
+| `fetch_paper_implementation` | Repos for a paper sorted by stars / official status |
+| `papers_with_negative_results` | Papers reporting failures, limitations, pitfalls for a topic |
+| `deep_dive_single_paper` | Citations, references, reproducibility rating for one arXiv paper |
+| `cross_dataset_analysis` | SOTA comparison across multiple benchmarks for a task+arch |
+
+### Evaluation & Academic Review *(v2.0.0)*
+| Tool | Description |
+|------|-------------|
+| `brutal_evaluate` | Red-team critique: FATAL_FLAWS, SCORES, VERDICT, practice audit |
+| `reiterate_architecture` | Per-iteration prescription (backbone/aug → recipe → TTA/ensemble) |
+| `roast_approach` | Humorous but technically precise critique with redemption arc |
+| `reviewer_perspective` | Full ICLR/NeurIPS/CVPR/ICML/AAAI rubric scoring |
+| `paper_worthiness` | Acceptance probability, missing experiments, priority actions |
+| `q1_journal_analysis` | Ranked Q1 journal targets (TPAMI/IJCV/TIP) + required work estimate |
+
+### Training Analysis *(v2.0.0)*
+| Tool | Description |
+|------|-------------|
+| `design_ablation_study` | Ranked ablation components + paper table Markdown |
+| `interpret_training_log` | Paste any log → OVERFITTING / UNDERFITTING / PLATEAU / INSTABILITY |
+| `estimate_kaggle_feasibility` | Memory + hours estimate, risk level, recommended GPU env |
+| `suggest_ensemble_strategy` | Diversity score, diversity-maximising ensemble recipe |
+| `identify_hard_samples` | Known hard cases per task + targeted augmentations |
+| `generate_hypothesis_test_plan` | Cohen's h, required N, bootstrap recipe for stat significance |
+
 ---
 
 ## 📁 Repository Structure
@@ -239,7 +335,7 @@ User: "here is my zip + competition slug"
 kaggle-mcp-research/
 ├── src/
 │   └── kaggle_mcp/
-│       ├── server.py              ← FastMCP server (all 35+ tools)
+│       ├── server.py              ← FastMCP server (55+ tools)
 │       ├── config.py              ← Token loading from env vars
 │       ├── __init__.py
 │       ├── __main__.py            ← python -m kaggle_mcp
@@ -248,13 +344,24 @@ kaggle-mcp-research/
 │           ├── huggingface.py     ← HuggingFace Hub operations
 │           ├── research.py        ← arXiv, S2, Papers With Code
 │           ├── notebook.py        ← Notebook generator templates
-│           └── zip_processor.py   ← ZIP/directory analyzer
+│           ├── zip_processor.py   ← ZIP/directory analyzer
+│           ├── evaluation.py      ← Brutal eval + academic review (v2)
+│           ├── deep_research.py   ← Method evolution + gap analysis (v2)
+│           └── analysis.py        ← Training diagnostics + ablation (v2)
 ├── tests/
-│   └── test_credentials.py       ← API validation test suite
+│   ├── conftest.py                ← Shared fixtures
+│   ├── test_credentials.py        ← API token validation
+│   ├── test_evaluation_tools.py   ← 40+ evaluation tests
+│   ├── test_deep_research.py      ← 35+ deep research tests
+│   └── test_analysis_and_notebook.py ← 40+ analysis + notebook tests
 ├── .github/
-│   └── copilot-instructions.md   ← Copilot pipeline instructions
+│   ├── copilot-instructions.md    ← 8-phase pipeline instructions
+│   └── workflows/
+│       ├── ci.yml                 ← GitHub Actions CI (Python 3.11+3.12)
+│       └── publish.yml            ← Auto-publish to PyPI on v* tag
 ├── .vscode/
 │   └── mcp.json                  ← VS Code MCP config
+├── Makefile                      ← install / test / lint / build / publish
 ├── pyproject.toml
 ├── .env.example
 └── README.md
@@ -268,19 +375,14 @@ kaggle-mcp-research/
 # Install dev dependencies
 pip install -e ".[dev]"
 
-# Run credential tests (requires real API tokens)
-KAGGLE_TOKEN=KGAT_xxx HF_TOKEN=hf_xxx pytest tests/ -v
+# Run all tests (requires KAGGLE_TOKEN for live API tests)
+KAGGLE_TOKEN=KGAT_xxx HF_TOKEN=hf_xxx pytest tests/ -v --tb=short
+
+# Unit-only, no live API calls
+pytest tests/test_evaluation_tools.py tests/test_analysis_and_notebook.py -v
 ```
 
-Expected output:
-```
-PASSED tests/test_credentials.py::test_kaggle_api_valid
-PASSED tests/test_credentials.py::test_hf_api_valid
-PASSED tests/test_credentials.py::test_arxiv_reachable
-PASSED tests/test_credentials.py::test_semantic_scholar_reachable
-PASSED tests/test_credentials.py::test_paperswithcode_reachable
-PASSED tests/test_credentials.py::test_mcp_server_tools_registered
-```
+Tip: the evaluation and analysis tests are fully offline — no API tokens needed.
 
 ---
 
@@ -363,12 +465,13 @@ Submit it to competition dl-ise-problem-statement-one.
 
 Contributions are very welcome! See [CONTRIBUTING.md](CONTRIBUTING.md).
 
-**Ideas:**
+**Ideas for v3:**
 - W&B / MLflow experiment tracking tools
-- Automated hyperparameter search report tool
-- Support for Kaggle Notebooks v2
-- Domain-specific templates (medical imaging, satellite, etc.)
+- Automated hyperparameter search (Optuna) report tool
+- Domain-specific templates (medical imaging, satellite, multi-modal)
 - RAG over PDF research papers
+- Real-time leaderboard monitoring with delta alerts
+- AutoML baseline generator for tabular competitions
 
 ---
 
@@ -388,6 +491,8 @@ Built with [FastMCP](https://github.com/jlowin/fastmcp) · [Kaggle API](https://
 
 **Made with love for the research and Kaggle community**
 
-Star this repo if it saves you time!
+⭐ Star this repo if it saves you GPU hours!
+
+**v2.0.0** · 55+ tools · 8-phase pipeline · brutal evaluation · Q1 journal routing
 
 </div>

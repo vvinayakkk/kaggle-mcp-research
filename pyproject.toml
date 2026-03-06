@@ -4,17 +4,18 @@ build-backend = "hatchling.build"
 
 [project]
 name = "kaggle-mcp-research"
-version = "1.0.0"
-description = "Full end-to-end Kaggle + HuggingFace MCP server for VS Code Copilot — upload research ZIPs, auto-design novel architectures, run & monitor Kaggle kernels, and retrieve results."
+version = "2.0.0"
+description = "End-to-end Kaggle research MCP: 55+ tools covering deep literature review, brutal architecture evaluation, academic reviewer simulation, ablation design, compute planning, notebook generation, and auto-submit — one prompt drives the whole pipeline."
 readme = "README.md"
 license = { file = "LICENSE" }
 requires-python = ">=3.10"
 authors = [
   { name = "Vinayak Bhatia", email = "ntpjc2vinayak@gmail.com" }
 ]
-keywords = ["mcp", "kaggle", "huggingface", "research", "copilot", "ai", "machine-learning"]
+keywords = ["mcp", "kaggle", "huggingface", "research", "copilot", "ai", "machine-learning", "evaluation", "sota", "deep-learning"]
 classifiers = [
   "Development Status :: 5 - Production/Stable",
+  "Environment :: Console",
   "Intended Audience :: Developers",
   "Intended Audience :: Science/Research",
   "License :: OSI Approved :: MIT License",
@@ -42,9 +43,11 @@ dev = [
   "pytest>=7.4.0",
   "pytest-asyncio>=0.23.0",
   "pytest-cov>=4.1.0",
-  "black>=23.0.0",
-  "ruff>=0.1.0",
+  "pytest-timeout>=2.2.0",
+  "ruff>=0.4.0",
   "mypy>=1.5.0",
+  "build>=1.2.0",
+  "twine>=5.0.0",
 ]
 
 [project.scripts]

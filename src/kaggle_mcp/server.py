@@ -1,10 +1,13 @@
 """
-Kaggle MCP Research Server
-==========================
-A full-featured MCP server giving GitHub Copilot access to:
+Kaggle Research MCP Server  v2.0.0
+===================================
+A full-featured MCP server giving GitHub Copilot autonomous access to:
   • Kaggle Competitions, Kernels, Datasets, Models
   • HuggingFace Hub (datasets, models, inference)
   • Academic research (arXiv, Semantic Scholar, Papers With Code)
+  • Deep research: method evolution, competition solutions, gap analysis
+  • Evaluation: brutal critique, reviewer simulation, journal worthiness
+  • Analysis: ablation study design, training diagnostics, compute estimation
   • Notebook generation (image classification, NLP, tabular, detection)
   • ZIP/directory research intake and analysis
 
@@ -33,30 +36,89 @@ from kaggle_mcp.tools import huggingface as _hf
 from kaggle_mcp.tools import research as _research
 from kaggle_mcp.tools import notebook as _notebook
 from kaggle_mcp.tools import zip_processor as _zip
+from kaggle_mcp.tools import evaluation as _eval
+from kaggle_mcp.tools import deep_research as _deep
+from kaggle_mcp.tools import analysis as _analysis
 
 # ════════════════════════════════════════════════════════════════════════════════
 # MCP SERVER INSTANCE
 # ════════════════════════════════════════════════════════════════════════════════
 
 mcp = FastMCP(
-    "Kaggle Research MCP",
+    "Kaggle Research MCP v2",
     instructions="""
-You are an autonomous AI research engineer with full access to Kaggle, HuggingFace,
-and academic paper databases (arXiv, Semantic Scholar, Papers With Code).
+You are an elite autonomous AI research engineer.
 
-When a user provides research material (a ZIP file path and/or a text description),
-immediately execute the full research pipeline WITHOUT asking clarifying questions:
+SINGLE PROMPT PIPELINE — execute ALL phases below without asking the user anything.
+When the user provides a ZIP path, competition slug, or topic, begin immediately.
 
-1. extract_zip_research      — understand the user's existing work
-2. full_literature_sweep     — survey SOTA papers + benchmarks
-3. get_sota_for_task         — get exact leaderboard numbers
-4. search_arxiv / search_semantic_scholar — find the latest methods
-5. generate_kaggle_notebook  — create a complete, GPU-ready notebook
-6. kaggle_push_and_run       — upload to Kaggle, wait for results
-7. kaggle_kernel_output_log  — retrieve ALL output / cell results
-8. Summarise findings        — architecture decisions, final metrics, next steps
+════════════════════════════════════════════════
+PHASE 0  — INTAKE
+════════════════════════════════════════════════
+  extract_zip_research(zip_path)          → understand existing work & task type
+  analyze_research_directory(dir_path)    → if already extracted
 
-Never ask the user for clarification; infer and proceed.
+════════════════════════════════════════════════
+PHASE 1  — DEEP LITERATURE SURVEY
+════════════════════════════════════════════════
+  full_literature_sweep(topic)            → arXiv + S2 + PwC SOTA in one call
+  analyse_method_evolution(topic)         → how the field evolved year by year
+  papers_with_negative_results(topic)     → what DOESN'T work (save GPU hours)
+  find_competition_winning_solutions(slug)→ top-voted Kaggle kernels for context
+
+════════════════════════════════════════════════
+PHASE 2  — RESEARCH GAP + ARCHITECTURE DESIGN
+════════════════════════════════════════════════
+  compare_sota_methods(task_slug)         → head-to-head SOTA comparison
+  identify_research_gaps(topic)           → unexplored combinations
+  → Design architecture_v1 based on gaps and SOTA
+
+════════════════════════════════════════════════
+PHASE 3  — BRUTAL EVALUATION LOOP (mandatory ×3)
+════════════════════════════════════════════════
+  brutal_evaluate(arch_v1)               → find FATAL FLAWS
+  reiterate_architecture(arch_v1, iter=1)→ fix backbone + augmentation
+  reiterate_architecture(arch_v2, iter=2)→ fix training recipe
+  reiterate_architecture(arch_v3, iter=3)→ fix inference + ensembling
+  roast_approach(arch_v3)                → final blunt critique
+
+════════════════════════════════════════════════
+PHASE 4  — ACADEMIC REVIEW (before committing to notebook)
+════════════════════════════════════════════════
+  reviewer_perspective(arch_v3, venue="ICLR")  → peer review simulation
+  paper_worthiness(arch_v3)                     → publication readiness
+  → Only proceed when score >= 6/10
+
+════════════════════════════════════════════════
+PHASE 5  — COMPUTE PLANNING
+════════════════════════════════════════════════
+  estimate_kaggle_feasibility(arch_final) → memory + time check
+  design_ablation_study(arch_final)       → define all experiments upfront
+
+════════════════════════════════════════════════
+PHASE 6  — NOTEBOOK GENERATION & SUBMISSION
+════════════════════════════════════════════════
+  generate_kaggle_notebook(arch_final)    → complete GPU-ready .ipynb
+  kaggle_push_and_run(...)                → push + wait for results
+  kaggle_kernel_output_log(...)           → retrieve ALL output
+
+════════════════════════════════════════════════
+PHASE 7  — RESULTS ANALYSIS
+════════════════════════════════════════════════
+  interpret_training_log(log_text)        → diagnose training dynamics
+  generate_hypothesis_test_plan(...)      → statistical significance
+
+════════════════════════════════════════════════
+PHASE 8  — PUBLICATION ROUTE (if results are strong)
+════════════════════════════════════════════════
+  q1_journal_analysis(arch, results)      → which journal, what's missing
+  suggest_ensemble_strategy(models)       → final performance squeeze
+
+RULES:
+  • NEVER ask the user for clarification — infer and proceed
+  • Complete ALL phases before reporting back
+  • If brutal_evaluate gives score < 4, STOP and redesign before proceeding
+  • All tool results are JSON — parse and reason about them explicitly
 """,
 )
 
@@ -614,6 +676,303 @@ def run_full_research_pipeline(
         report["steps"]["kaggle_run"] = push_result
 
     return json.dumps(report, indent=2)
+
+
+# ════════════════════════════════════════════════════════════════════════════════
+# ── EVALUATION & REVIEW TOOLS ────────────────────────────────────────────────
+# ════════════════════════════════════════════════════════════════════════════════
+
+@mcp.tool()
+def brutal_evaluate(
+    arch_description: str,
+    task_type:        str = "image_classification",
+    dataset_info:     str = "",
+    target_metric:    str = "f1",
+    competition_slug: str = "",
+) -> str:
+    """
+    Brutally honest technical evaluation of a proposed ML approach.
+    Returns FATAL_FLAWS, SERIOUS_CONCERNS, MINOR_ISSUES, SOTA comparison,
+    and an OVERALL_SCORE (0-10) with VERDICT: proceed / reiterate / scrap.
+    CALL THIS before generating any notebook.
+    """
+    return _eval.brutal_evaluate(arch_description, task_type, dataset_info,
+                                 target_metric, competition_slug)
+
+
+@mcp.tool()
+def reiterate_architecture(
+    arch_description:    str,
+    task_type:           str = "image_classification",
+    evaluation_feedback: str = "",
+    iteration_num:       int = 1,
+) -> str:
+    """
+    Systematically improves an architecture — run 3 times before generating notebook.
+    iter=1: backbone + augmentation  |  iter=2: training recipe  |  iter=3: inference
+    Returns: changes_applied, improved_description, expected_delta.
+    """
+    return _eval.reiterate_architecture(arch_description, task_type,
+                                        evaluation_feedback, iteration_num)
+
+
+@mcp.tool()
+def roast_approach(
+    arch_description:    str,
+    task_type:           str = "image_classification",
+    competition_context: str = "",
+) -> str:
+    """
+    Senior ML researcher's blunt critique — technically grounded, specific roast.
+    Returns: punchline, brutal_observations, technical_debt_list,
+             what_a_kaggle_grandmaster_does_instead, redemption_arc.
+    """
+    return _eval.roast_approach(arch_description, task_type, competition_context)
+
+
+@mcp.tool()
+def reviewer_perspective(
+    arch_description: str,
+    results_summary:  str = "",
+    target_venue:     str = "ICLR",
+) -> str:
+    """
+    Simulate a peer reviewer at a top ML venue (ICLR / NeurIPS / CVPR / ICML / AAAI).
+    Returns: rubric scores, strengths, weaknesses, required_changes, verdict.
+    """
+    return _eval.reviewer_perspective(arch_description, results_summary, target_venue)
+
+
+@mcp.tool()
+def paper_worthiness(
+    arch_description: str,
+    results_summary:  str  = "",
+    target_venue:     str  = "CVPR",
+    ablation_done:    bool = False,
+    code_available:   bool = False,
+    num_datasets:     int  = 1,
+) -> str:
+    """
+    Publication readiness assessment for a given venue.
+    Returns: readiness_score, acceptance_probability, missing_for_submission,
+             minimum_venue, stretch_venue, estimated_weeks_to_ready.
+    """
+    return _eval.paper_worthiness(arch_description, results_summary, target_venue,
+                                  ablation_done, code_available, num_datasets)
+
+
+@mcp.tool()
+def q1_journal_analysis(
+    arch_description: str,
+    results_summary:  str  = "",
+    domain:           str  = "computer_vision",
+    has_theory:       bool = False,
+    num_datasets:     int  = 1,
+    num_baselines:    int  = 0,
+) -> str:
+    """
+    Full Q1 journal analysis: IEEE TPAMI (IF=23.6), IJCV (IF=13.2), TIP (IF=10.6),
+    Pattern Recognition (IF=7.9), JMLR (IF=6.0), IEEE TNNLS (IF=14.3).
+    Returns: ranked journals, acceptance_probability, required_experiments, timeline.
+    domain: 'computer_vision' | 'nlp' | 'general_ml'
+    """
+    return _eval.q1_journal_analysis(arch_description, results_summary, domain,
+                                     has_theory, num_datasets, num_baselines)
+
+
+# ════════════════════════════════════════════════════════════════════════════════
+# ── DEEP RESEARCH TOOLS ───────────────────────────────────────────────────────
+# ════════════════════════════════════════════════════════════════════════════════
+
+@mcp.tool()
+def analyse_method_evolution(
+    topic:      str,
+    start_year: int = 2018,
+) -> str:
+    """
+    Year-by-year timeline of how a technique evolved.
+    Returns: timeline, key_inflection_points, current_frontier, dominant_trend.
+    """
+    return _deep.analyse_method_evolution(topic, start_year)
+
+
+@mcp.tool()
+def find_competition_winning_solutions(
+    competition_slug: str,
+    top_n:            int = 15,
+) -> str:
+    """
+    Fetch top-voted Kaggle kernels for a competition.
+    Returns: kernel list, most_used_architectures, most_used_techniques.
+    """
+    return _deep.find_competition_winning_solutions(competition_slug, top_n)
+
+
+@mcp.tool()
+def compare_sota_methods(
+    task_slug:     str,
+    metric_filter: str = "",
+) -> str:
+    """
+    Head-to-head SOTA comparison from Papers With Code.
+    task_slug: 'image-classification' | 'object-detection' | 'text-classification' etc.
+    Returns: comparison_table, top_3, newest_method, recommendation.
+    """
+    return _deep.compare_sota_methods(task_slug, metric_filter)
+
+
+@mcp.tool()
+def identify_research_gaps(
+    topic:       str,
+    papers_dump: str = "",
+    domain:      str = "computer_vision",
+) -> str:
+    """
+    Find unexplored combinations and open problems in a research area.
+    Returns: unexplored_combinations, domain_open_problems, novel_paper_seeds.
+    """
+    return _deep.identify_research_gaps(topic, papers_dump, domain)
+
+
+@mcp.tool()
+def fetch_paper_implementation(
+    query: str,
+    lang:  str = "python",
+) -> str:
+    """
+    Find GitHub repos and implementation details for a paper.
+    query: paper title or arXiv ID (e.g. '2010.11929' or 'ConvNeXt')
+    Returns: repositories, implementation_quality, quickstart_hints.
+    """
+    return _deep.fetch_paper_implementation(query, lang)
+
+
+@mcp.tool()
+def papers_with_negative_results(
+    topic: str,
+    limit: int = 10,
+) -> str:
+    """
+    Find papers reporting what DOESN'T work — avoids wasted experiments.
+    Returns: negative_findings, known_domain_pitfalls, time_saved estimate.
+    """
+    return _deep.papers_with_negative_results(topic, limit)
+
+
+@mcp.tool()
+def deep_dive_single_paper(arxiv_id_or_title: str) -> str:
+    """
+    Full metadata, citations, references, and reproduce difficulty for one paper.
+    arxiv_id_or_title: '2010.11929' or partial title string.
+    """
+    return _deep.deep_dive_single_paper(arxiv_id_or_title)
+
+
+@mcp.tool()
+def cross_dataset_analysis(
+    task_type:    str,
+    architecture: str = "",
+) -> str:
+    """
+    SOTA results across multiple benchmarks for a task type.
+    Shows how well methods generalise and where the bar is set.
+    """
+    return _deep.cross_dataset_analysis(task_type, architecture)
+
+
+# ════════════════════════════════════════════════════════════════════════════════
+# ── ANALYSIS & INTERPRETATION TOOLS ──────────────────────────────────────────
+# ════════════════════════════════════════════════════════════════════════════════
+
+@mcp.tool()
+def design_ablation_study(
+    arch_description:  str,
+    task_type:         str = "image_classification",
+    available_compute: str = "P100",
+) -> str:
+    """
+    Design a comprehensive, prioritised ablation study before training.
+    Returns: component list, paper_table_markdown, minimal vs full ablation runs.
+    """
+    return _analysis.design_ablation_study(arch_description, task_type, available_compute)
+
+
+@mcp.tool()
+def interpret_training_log(
+    log_text:    str,
+    metric_name: str = "f1",
+) -> str:
+    """
+    Diagnose training dynamics from a training log (any common format).
+    Detects: overfitting, underfitting, plateau, instability, early convergence.
+    Returns: diagnosis, issues_detected, recommendations, next_experiments.
+    """
+    return _analysis.interpret_training_log(log_text, metric_name)
+
+
+@mcp.tool()
+def estimate_kaggle_feasibility(
+    arch_description: str,
+    dataset_info:     str  = "",
+    num_epochs:       int  = 30,
+    batch_size:       int  = 32,
+    image_size:       int  = 224,
+    use_accumulation: bool = False,
+) -> str:
+    """
+    Estimate memory and training time; check Kaggle GPU session limits.
+    Returns: estimated_memory_gb, estimated_hours, recommended_env, risk_level.
+    """
+    return _analysis.estimate_kaggle_feasibility(
+        arch_description, dataset_info, num_epochs, batch_size, image_size, use_accumulation
+    )
+
+
+@mcp.tool()
+def suggest_ensemble_strategy(
+    task_type:           str,
+    model_descriptions:  list = [],
+    num_folds:           int  = 5,
+    metric:              str  = "f1",
+) -> str:
+    """
+    Recommend how to combine multiple models for maximum gain.
+    Returns: strategy (simple/advanced/best), diversity_score, expected_gain,
+             implementation_hint.
+    """
+    return _analysis.suggest_ensemble_strategy(task_type, model_descriptions, num_folds, metric)
+
+
+@mcp.tool()
+def identify_hard_samples(
+    task_type:    str,
+    class_names:  list = [],
+    dataset_info: str  = "",
+) -> str:
+    """
+    List known hard/edge cases for a task type.
+    Returns: known_hard_cases, confusion_matrix_patterns,
+             targeted_augmentations, manual_inspection_checklist.
+    """
+    return _analysis.identify_hard_samples(task_type, class_names, dataset_info)
+
+
+@mcp.tool()
+def generate_hypothesis_test_plan(
+    metric:         str   = "f1",
+    baseline_score: float = 0.80,
+    proposed_score: float = 0.83,
+    n_test_samples: int   = 1000,
+    n_experiments:  int   = 5,
+) -> str:
+    """
+    Design a statistical significance testing plan.
+    Returns: effect_size, required_n, statistically_detectable,
+             recommended_tests, bootstrap_recipe.
+    """
+    return _analysis.generate_hypothesis_test_plan(
+        metric, baseline_score, proposed_score, n_test_samples, n_experiments
+    )
 
 
 # ════════════════════════════════════════════════════════════════════════════════
